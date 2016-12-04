@@ -83,7 +83,7 @@ Builder.load_string('''
             size: 150,200
             pos_hint: {"center_y": 0.5, "center_x": 0.5}
         Label:
-            text:"Webscraper de Taxa de Juros</br>"
+            text:"Webscraper de Taxa de Juros"
             markup: True
             size_hint: None, None
             size: 300, 200
@@ -159,13 +159,10 @@ class AppScreen(GridLayout):
         start_time_seconds = time.time()
         self.ids.start_button.disabled = True
         for elemen in range(0, len(links)):
-            if elemen == 3:
-                pass
-            else:
-                str_output_logger = []
-                Webscraper(links[elemen],sel_folder,log_file,str_output_logger)
-                self.ids.log_output.text += "".join(str_output_logger)
-                gc.collect()
+            str_output_logger = []
+            Webscraper(links[elemen],sel_folder,log_file,str_output_logger)
+            self.ids.log_output.text += "".join(str_output_logger)
+            gc.collect()
         self.ids.start_button.disabled = False
         end_time_seconds = time.time()
         elapsed_time = str(int(round(end_time_seconds - start_time_seconds)))

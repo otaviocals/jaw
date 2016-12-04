@@ -27,6 +27,8 @@ import gc
 
 
 rows = []
+row = []
+append_to_csv = False
 current_os = platform
 
 if current_os.startswith("linux"):
@@ -48,18 +50,57 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
 #Getting Raw Data
 
     with closing(PhantomJS()) as browser:
-        browser.get(url)
-        browser.implicitly_wait(15)
-    
-        page_source = browser.find_elements_by_class_name("a78")
-        print(page_source)
 
+        browser.implicitly_wait(10)
+        table_class = ""
+        tries = 0
+
+#Getting Table HTML
+        
+        got_table = False
+        while tries <= 5:
+            browser.get(url)
     
-        dates = browser.find_element_by_class_name("a19").text
+            page_source = browser.find_elements_by_class_name("a85")
+            if len(page_source) > 0:
+                table_class = "a85"
+                got_table = True
+                break
+            else:
+                page_source = browser.find_elements_by_class_name("a84")
+                if len(page_source) > 0:
+                    table_class = "a84"
+                    got_table = True
+                    break
+            tries += 1
+        
+#Getting Dates HTML
+        
+        dates_list = browser.find_elements_by_class_name("a19")
+        if len(dates_list) > 0:
+            dates_class = "a19"
+            dates = browser.find_element_by_class_name("a19").text
+        else:
+            dates_list = browser.find_elements_by_class_name("a18")
+            if len(dates_list) > 0:
+                dates_class = "a18"
+                dates = browser.find_element_by_class_name("a18").text
+
+#Getting Title HTML
 
         title = browser.find_element_by_class_name("mnuTitulo").text.replace(" ", "_")
         title += "_"
-        title += browser.find_element_by_class_name("a25l").text.replace(" ", "_").upper()
+        sub_title_list = browser.find_elements_by_class_name("a25l")
+        if len(sub_title_list) > 0:
+            sub_title_class = "a25l"
+            sub_title = browser.find_element_by_class_name("a25l").text.replace(" ", "_").upper()
+        else:
+            sub_title_list = browser.find_elements_by_class_name("a24l")
+            if len(sub_title_list) > 0:
+                sub_title_class = "a24l"
+                sub_title = browser.find_element_by_class_name("a24l").text.replace(" ", "_").upper()
+        title += sub_title
+
 
         print(title)
         if not print_output == None:
@@ -78,14 +119,18 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
     title = normalize("NFKD",title).encode("ASCII","ignore").decode("ASCII")
 
 #Getting Table Dates
-    
-    date_string_cut = dates.find(" a ")
-    start_date = dates[:date_string_cut]
-    end_date = dates[date_string_cut+3:]
+
+    if dates_class == "a19":
+        date_string_cut = dates.find(" a ")
+        start_date = dates[:date_string_cut]
+        end_date = dates[date_string_cut+3:]
+    elif dates_class == "a18":
+        start_date = dates
+        end_date = start_date
 
 #Getting Table Data
-
-    table_start = page_source.find("class=\"a85\"")-93
+    
+    table_start = page_source.find("class=\""+table_class+"\"")-93
     start_cut_source = page_source[table_start:]
 
     table_end = start_cut_source.find("</td></tr></tbody></table>")+26
@@ -134,6 +179,9 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
 #Checking Digests
             
             same_table = (current_hash == rows[len(rows)-1][2])
+            print(current_hash)
+            print(rows[len(rows)-1][2])
+            print(same_table)
             if(not same_table):
                 rows.pop()
                 append_to_csv = True
@@ -152,7 +200,7 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
 
 #Parsing XML to CSV
             
-    if(append_to_csv):
+    if(append_to_csv == True):
         for tr in soup_table.find_all("tr")[3:]:
             tds = tr.find_all("td")
             row = [elem.text for elem in tds]
@@ -162,9 +210,9 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
 
 #Writing current table to file
 
-    with open(folder+slash+title+".csv","w",encoding="UTF-8") as f:
-        csv_file = writer(f)
-        csv_file.writerows(rows)
+        with open(folder+slash+title+".csv","w",encoding="utf-8") as f:
+            csv_file = writer(f)
+            csv_file.writerows(rows)
 
     gc.collect()
 
