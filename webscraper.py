@@ -19,17 +19,29 @@ from selenium.webdriver.support.ui import WebDriverWait
 from bs4 import BeautifulSoup
 from pathlib import Path
 from hashlib import sha512
-
-
+from os.path import isdir
+from os import makedirs,getcwd
+from sys import platform
 
 
 rows = []
+current_os = platform
+
+if current_os.startswith("linux"):
+    slash = "/"
+elif current_os.startswith("win32") or current_os.startswith("cygwin"):
+    slash = "\\"
+elif current_os.startswith("darwin"):
+    slash = "/"
+else:
+    slash = "/"
+
 
 ######################
 # Webscrapping Stage #
 ######################
 
-def webscraper(url = "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Aquisi%C3%A7%C3%A3o%20de%20ve%C3%ADculos&parametros='tipopessoa:1;modalidade:401;encargo:101"):
+def Webscraper(url, folder):
 
 #Getting Raw Data
 
@@ -42,6 +54,10 @@ def webscraper(url = "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2F
         dates = browser.find_element_by_class_name("a19").text
 
         title = browser.find_element_by_class_name("mnuTitulo").text.replace(" ", "_")
+        title += "_"
+        title += browser.find_element_by_class_name("a25l").text.replace(" ", "_").upper()
+
+        print(title)
 
         page_source = browser.page_source
 
@@ -64,7 +80,7 @@ def webscraper(url = "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2F
     table_start = page_source.find("class=\"a85\"")-93
     start_cut_source = page_source[table_start:]
 
-    table_end = start_cut_source.find("</td></tr></tbody></table></td><td></td></tr></tbody></table></div></td>")+26
+    table_end = start_cut_source.find("</td></tr></tbody></table>")+26
     html_table = start_cut_source[:table_end]
 
 #Getting Table Digest
@@ -79,9 +95,14 @@ def webscraper(url = "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2F
 #    Writing Stage   #
 ######################
 
+#Check Folder Existence
+
+    if(not isdir(folder)):
+        makedirs(folder)
+    
 #Creating Document if there is no previous file
 
-    if(not Path(title+".csv").is_file()):
+    if(not Path(folder+slash+title+".csv").is_file()):
         for tr in [soup_table.find_all("tr")[2]]:
             tds = tr.find_all("td")
             row = [elem.text for elem in tds]
@@ -92,7 +113,7 @@ def webscraper(url = "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2F
 #Loading previous file if it exists
         
     else:
-        with open(title+".csv","r",encoding="UTF-8") as f:
+        with open(folder+slash+title+".csv","r",encoding="UTF-8") as f:
             csv_file_read = reader(f)
             for read_row in csv_file_read:
                 rows.append(read_row)
@@ -103,8 +124,10 @@ def webscraper(url = "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2F
             if(not same_table):
                 rows.pop()
                 append_to_csv = True
+                print("Changes Detected! Appending new data...")
             else:
                 append_to_csv = False
+                print("No changes detected.")
 
 #Parsing XML to CSV
             
@@ -118,7 +141,7 @@ def webscraper(url = "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2F
 
 #Writing current table to file
 
-    with open(title+".csv","w",encoding="UTF-8") as f:
+    with open(folder+slash+title+".csv","w",encoding="UTF-8") as f:
         csv_file = writer(f)
         csv_file.writerows(rows)
 
@@ -129,4 +152,6 @@ def webscraper(url = "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2F
 
 if __name__ == "__main__":
     from sys import argv
-    webscraper("http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path="+argv[1])
+    url = input("Enter url to scrap from:\n")
+    folder = input("Enter folder to download to:\n")
+    Webscraper(url,folder)

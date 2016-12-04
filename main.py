@@ -16,6 +16,7 @@ from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.filechooser import FileChooserListView
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
 from kivy.core.window import Window
 from kivy.clock import Clock
 from os.path import join, isdir, expanduser
@@ -23,7 +24,9 @@ from sys import platform
 from kivy.lang import Builder
 from file import XFolder
 import tools
-from webscraper import webscraper
+from webscraper import Webscraper
+import time
+import datetime
 
 
 current_os = platform
@@ -38,17 +41,46 @@ elif current_os.startswith("darwin"):
 else:
     slash = "/"
 
+links = [
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Aquisi%C3%A7%C3%A3o%20de%20outros%20bens&parametros='tipopessoa:1;modalidade:402;encargo:101'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Aquisi%C3%A7%C3%A3o%20de%20ve%C3%ADculos&parametros='tipopessoa:1;modalidade:401;encargo:101'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Cart%C3%A3o%20de%20cr%C3%A9dito%20parcelado&parametros='tipopessoa:1;modalidade:215;encargo:101'",
+    #"http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Cart%C3%A3o%20de%20cr%C3%A9dito%20rotativo&parametros='tipopessoa:1;modalidade:204;encargo:101'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Cheque%20especial&parametros='tipopessoa:1;modalidade:216;encargo:101'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Cr%C3%A9dito%20pessoal%20consignado%20INSS&parametros='tipopessoa:1;modalidade:218;encargo:101'",
+    #"http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Cr%C3%A9dito%20pessoal%20consignado%20privado&parametros='tipopessoa:1;modalidade:219;encargo:101'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Cr%C3%A9dito%20pessoal%20consignado%20p%C3%BAblico&parametros='tipopessoa:1;modalidade:220;encargo:101'",
+    #"http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Desconto%20de%20cheques&parametros='tipopessoa:1;modalidade:302;encargo:101'",
+    ##"http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais-ModalidadeMensal.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Financiamento%20imobili%C3%A1rio%20com%20taxas%20reguladas&parametros='tipopessoa:1;modalidade:905;encargo:101'",
+    ##"http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais-ModalidadeMensal.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Financiamento%20imobili%C3%A1rio%20com%20taxas%20de%20mercado&parametros='tipopessoa:1;modalidade:903;encargo:101'",
+    #"http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Cr%C3%A9dito%20pessoal%20n%C3%A3o%20consignado&parametros='tipopessoa:1;modalidade:221;encargo:101'",
+    #"http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Leasing%20de%20ve%C3%ADculos&parametros='tipopessoa:1;modalidade:1205;encargo:101'",
+    ##"http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais-ModalidadeMensal.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Financiamento%20imobili%C3%A1rio%20com%20taxas%20reguladas&parametros='tipopessoa:1;modalidade:905;encargo:201'",
+    ##"http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais-ModalidadeMensal.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Financiamento%20imobili%C3%A1rio%20com%20taxas%20de%20mercado&parametros='tipopessoa:1;modalidade:903;encargo:201'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20jur%C3%ADdica%20-%20Antecipa%C3%A7%C3%A3o%20de%20faturas%20de%20cart%C3%A3o%20de%20cr%C3%A9dito&parametros='tipopessoa:2;modalidade:303;encargo:101'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20jur%C3%ADdica%20-%20Capital%20de%20giro%20com%20prazo%20at%C3%A9%20365%20dias&parametros='tipopessoa:2;modalidade:210;encargo:101'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20jur%C3%ADdica%20-%20Capital%20de%20giro%20com%20prazo%20superior%20a%20365%20dias&parametros='tipopessoa:2;modalidade:211;encargo:101'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20jur%C3%ADdica%20-%20Cheque%20especial&parametros='tipopessoa:2;modalidade:216;encargo:101'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20jur%C3%ADdica%20-%20Conta%20garantida&parametros='tipopessoa:2;modalidade:217;encargo:101'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20jur%C3%ADdica%20-%20Desconto%20de%20cheques&parametros='tipopessoa:2;modalidade:302;encargo:101'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20jur%C3%ADdica%20-%20Desconto%20de%20duplicata&parametros='tipopessoa:2;modalidade:301;encargo:101'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20jur%C3%ADdica%20-%20Vendor&parametros='tipopessoa:2;modalidade:404;encargo:101'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20jur%C3%ADdica%20-%20Capital%20de%20giro%20com%20prazo%20at%C3%A9%20365%20dias&parametros='tipopessoa:2;modalidade:210;encargo:204'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20jur%C3%ADdica%20-%20Capital%20de%20giro%20com%20prazo%20superior%20a%20365%20dias&parametros='tipopessoa:2;modalidade:211;encargo:204'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20jur%C3%ADdica%20-%20Conta%20garantida&parametros='tipopessoa:2;modalidade:217;encargo:204'",
+    "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20jur%C3%ADdica%20-%20Adiantamento%20sobre%20contratos%20de%20c%C3%A2mbio&parametros='tipopessoa:2;modalidade:502;encargo:205'"]
+
 
 Builder.load_string('''
 <AppScreen>
     BoxLayout:
         orientation: "horizontal"
         Label:
-            text:"blablabla"
+            text:"Foto Bacana"
             size_hint: None, None
             size: 150,200
         Label:
-            text:"bleblelbe"
+            text:"Webscraper Hackudo"
             size_hint: None, None
             size: 300, 200
     BoxLayout:
@@ -60,8 +92,9 @@ Builder.load_string('''
             size_hint: None, None
             size: 150, 50
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
-        TextInput:
-            text: root.default_folder
+            id: folder_button
+        Label:
+            text: "Pasta selecionada:    " + root.default_folder
             size: 450, 30
             size_hint: None, None
             id: text_input
@@ -73,14 +106,13 @@ Builder.load_string('''
             size_hint: None, None
             size: 450, 100
         Spinner:
-            text: "30 segundos"
-            values: ("30 segundos","15 minutos","1 hora","6 horas","12 horas")
+            text: "10 minutos"
+            values: ("10 minutos","15 minutos","1 hora","6 horas","12 horas")
             size: 150,50
             size_hint: None, None
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
-    BoxLayout:
-        orientation: "horizontal"
-        spacing: 50
+            id: spinner
+    FloatLayout:
         ToggleButton:
             text: "Stop" if self.state == "down" else "Start"
             size: 150, 50
@@ -88,6 +120,7 @@ Builder.load_string('''
             pos_hint: {"center_y": 0.5, "center_x": 0.5}
             group: "start"
             on_state: root.start(*args)
+            id: start_button
             
 ''')
 
@@ -99,14 +132,40 @@ class AppScreen(GridLayout):
     sel_folder = default_folder
     
     def scrap(self,event):
-        print(sel_folder)
+        print("Starting at "+str(datetime.datetime.now()))
+        print("Download Starting...")
+        start_time_seconds = time.time()
+        self.ids.start_button.disabled = True
+        for elemen in links:
+            Webscraper(elemen,sel_folder)
+        self.ids.start_button.disabled = False
+        end_time_seconds = time.time()
+        elapsed_time = str(int(round(end_time_seconds - start_time_seconds)))
+        print("Ending at "+str(datetime.datetime.now()))
+        print("Total Elapsed Time: "+elapsed_time+" seconds.")
+        print("Success!")
         
 
     def start(self,*args):
         if args[1] == "down":
+            self.ids.spinner.disabled = True
+            self.ids.folder_button.disabled = True
+            if self.ids.spinner.text == "10 minutos":
+                time_interval = 600
+            elif self.ids.spinner.text == "30 minutos":
+                time_interval = 1800
+            elif self.ids.spinner.text == "1 hora":
+                time_interval = 3600
+            elif self.ids.spinner.text == "6 horas":
+                time_interval = 21600
+            elif self.ids.spinner.text == "12 horas":
+                time_interval = 43200
             global event
-            event = Clock.schedule_interval(self.scrap, 0.5)
+            Clock.schedule_once(self.scrap,0.5)
+            event = Clock.schedule_interval(self.scrap, time_interval)
         if args[1] == "normal":
+            self.ids.spinner.disabled = False
+            self.ids.folder_button.disabled = False
             global event
             Clock.unschedule(event)
             
@@ -121,7 +180,7 @@ class AppScreen(GridLayout):
             s = 'Path: %s' % instance.path
             s += ('\nSelection: %s' % instance.selection)
             global sel_folder
-            self.ids.text_input.text = instance.path
+            self.ids.text_input.text = "Pasta selecionada:    " + instance.path
             sel_folder = instance.path
 
     def _folder_dialog(self):
@@ -137,73 +196,7 @@ class AppScreen(GridLayout):
         self.size_hint = (None,1)
         self.width = 450
 
-#        self.layout0 = BoxLayout(orientation="horizontal")
-#        image0_1 = Label(
-#            text="User Name",
-#            size=(150,200),
-#            size_hint=(None,None)
-#            )
-#        label0_2 = Label(
-#            text="User Name",
-#            size=(300,200),
-#            size_hint=(None,None)
-#            )
-#        self.layout0.add_widget(image0_1)
-#        self.layout0.add_widget(label0_2)
-#        self.add_widget(self.layout0)
-#
-#        
-#        self.layout1 = BoxLayout(orientation="vertical")
-#        label1_1 = Label(
-#            text="[color=000000]Diretório Destino[/color]",
-#            markup = True,
-#            size=(450,100),
-#            size_hint=(None,None)
-#            )
-#        directory1_2 = TextInput(
-#            text=expanduser("~")+slash+"Documents",
-#            size=(450,30),
-#            size_hint=(None,None)
-#            )
-#        self.layout1.add_widget(label1_1)
-#        self.layout1.add_widget(directory1_2)
-#        self.add_widget(self.layout1)
-#
-#        self.layout2 = BoxLayout(orientation="vertical")
-#        label2_1 = Label(
-#            text="[color=000000]Frequência de Leitura[/color]",
-#            markup = True,
-#            size=(450,100),
-#            size_hint=(None,None)
-#            )
-#        spin2_2 = Spinner(
-#            text="30 segundos",
-#            values=("30 segundos","15 minutos","1 hora","6 horas","12 horas"),
-#            size=(150,50),
-#            size_hint=(None,None),
-#            pos_hint={"center_x": 0.5}
-#            )
-#        self.layout2.add_widget(label2_1)
-#        self.layout2.add_widget(spin2_2)
-#        self.add_widget(self.layout2)
-#
-#        
-#        self.layout3 = BoxLayout(orientation="vertical",spacing=50)
-#        start_btn = ToggleButton(
-#            text="Start",
-#            size=(200,50),
-#            size_hint=(None,None),
-#            pos_hint={"center_y": 0.5, "center_x": 0.5}
-#            )
-#        #btn2 = Button(
-#        #    text="Pause",
-#        #    size=(200,50),
-#        #    size_hint=(None,None),
-#        #    pos_hint={"center_y": 0.5}
-#        #    )
-#        self.layout3.add_widget(start_btn)
-#        #self.layout3.add_widget(btn2)
-#        self.add_widget(self.layout3)
+
         
 
 
