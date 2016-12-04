@@ -22,6 +22,8 @@ from hashlib import sha512
 from os.path import isdir
 from os import makedirs,getcwd
 from sys import platform
+import sys
+import gc
 
 
 rows = []
@@ -41,15 +43,17 @@ else:
 # Webscrapping Stage #
 ######################
 
-def Webscraper(url, folder):
+def Webscraper(url, folder, print_output = None, visual_output = None):
 
 #Getting Raw Data
 
     with closing(PhantomJS()) as browser:
         browser.get(url)
-        browser.implicitly_wait(10)
+        browser.implicitly_wait(15)
     
-        page_source = browser.find_element_by_class_name("a78")
+        page_source = browser.find_elements_by_class_name("a78")
+        print(page_source)
+
     
         dates = browser.find_element_by_class_name("a19").text
 
@@ -58,6 +62,10 @@ def Webscraper(url, folder):
         title += browser.find_element_by_class_name("a25l").text.replace(" ", "_").upper()
 
         print(title)
+        if not print_output == None:
+            print_output.write((title+"\n").encode("utf-8").decode("utf-8"))
+        if not visual_output == None:
+            visual_output.append(title+"\n")
 
         page_source = browser.page_source
 
@@ -109,6 +117,11 @@ def Webscraper(url, folder):
             row.insert(0,"Data")
             rows.append(row)
             append_to_csv = True
+            print("No file detected. Creating table...")
+            if not print_output == None:
+                print_output.write("No file detected. Creating table...\n")
+            if not visual_output == None:
+                visual_output.append("No file detected. Creating table...\n")
         
 #Loading previous file if it exists
         
@@ -125,9 +138,17 @@ def Webscraper(url, folder):
                 rows.pop()
                 append_to_csv = True
                 print("Changes Detected! Appending new data...")
+                if not print_output == None:
+                    print_output.write("Changes Detected! Appending new data...\n")
+                if not visual_output == None:
+                    visual_output.append("Changes Detected! Appending new data...\n")
             else:
                 append_to_csv = False
                 print("No changes detected.")
+                if not print_output == None:
+                    print_output.write("No changes detected.\n")
+                if not visual_output == None:
+                    visual_output.append("No changes detected.\n")
 
 #Parsing XML to CSV
             
@@ -145,6 +166,7 @@ def Webscraper(url, folder):
         csv_file = writer(f)
         csv_file.writerows(rows)
 
+    gc.collect()
 
 ######################
 #        Main        #
