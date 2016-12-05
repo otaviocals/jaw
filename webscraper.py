@@ -26,26 +26,26 @@ import sys
 import gc
 
 
-rows = []
-row = []
-append_to_csv = False
-current_os = platform
-
-if current_os.startswith("linux"):
-    slash = "/"
-elif current_os.startswith("win32") or current_os.startswith("cygwin"):
-    slash = "\\"
-elif current_os.startswith("darwin"):
-    slash = "/"
-else:
-    slash = "/"
-
 
 ######################
 # Webscrapping Stage #
 ######################
 
 def Webscraper(url, folder, print_output = None, visual_output = None):
+
+    rows = []
+    row = []
+    append_to_csv = False
+    current_os = platform
+
+    if current_os.startswith("linux"):
+        slash = "/"
+    elif current_os.startswith("win32") or current_os.startswith("cygwin"):
+        slash = "\\"
+    elif current_os.startswith("darwin"):
+        slash = "/"
+    else:
+        slash = "/"
 
 #Getting Raw Data
 
@@ -179,9 +179,7 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
 #Checking Digests
             
             same_table = (current_hash == rows[len(rows)-1][2])
-            print(current_hash)
-            print(rows[len(rows)-1][2])
-            print(same_table)
+            
             if(not same_table):
                 rows.pop()
                 append_to_csv = True
@@ -210,8 +208,8 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
 
 #Writing current table to file
 
-        with open(folder+slash+title+".csv","w",encoding="utf-8") as f:
-            csv_file = writer(f)
+        with open(folder+slash+title+".csv","w",encoding="utf-8") as g:
+            csv_file = writer(g)
             csv_file.writerows(rows)
 
     gc.collect()
