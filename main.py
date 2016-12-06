@@ -19,6 +19,8 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.core.window import Window
+from kivy.config import Config
+from kivy.core.window import Window
 from kivy.clock import Clock
 from os.path import join, isdir, expanduser, isfile
 from sys import platform
@@ -30,6 +32,12 @@ import time
 import datetime
 import gc
 import sys
+
+
+Config.set("graphics","width","450")
+Config.set("graphics","height","900")
+Config.set("graphics","fullscreen","0")
+Config.set("graphics","borderless","0")
 
 current_os = platform
 
@@ -226,11 +234,12 @@ class AppScreen(GridLayout):
     def __init__(self,**kwargs):
         super(AppScreen, self).__init__(**kwargs)
 
-        #Window.clearcolor = (0.7,0.7,0.7,1)
+        Window.size = (450,200)
         
         self.cols = 1
-        self.size_hint = (None,1)
+        self.size_hint = (None,None)
         self.width = 450
+        self.height = 750
 
 
         

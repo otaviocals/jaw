@@ -100,7 +100,7 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
                 sub_title_class = "a24l"
                 sub_title = browser.find_element_by_class_name("a24l").text.replace(" ", "_").upper()
         title += sub_title
-
+        title = normalize("NFKD",title).encode("ASCII","ignore").decode("ASCII")
 
         print(title)
         if not print_output == None:
@@ -114,9 +114,6 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
 #  Processing Stage  #
 ######################
 
-#Getting Title of Table
-
-    title = normalize("NFKD",title).encode("ASCII","ignore").decode("ASCII")
 
 #Getting Table Dates
 
