@@ -22,6 +22,7 @@ from hashlib import sha512
 from os.path import isdir
 from os import makedirs,getcwd
 from sys import platform
+import lxml
 import sys
 import gc
 
@@ -155,8 +156,9 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
     if(not Path(folder+slash+title+".csv").is_file()):
         for tr in [soup_table.find_all("tr")[2]]:
             tds = tr.find_all("td")
-            row = [elem.text for elem in tds]
-            row.insert(0,"Data")
+            #row = [normalize("NFKD",ele.text).encode("ASCII","ignore").decode("ASCII") for elem in tds]
+            #row.insert(0,"Data")
+            row = ["Data","Posicao","Instituicao","% a.m.","% a.a."]
             rows.append(row)
             append_to_csv = True
             print("No file detected. Creating table...")
@@ -168,7 +170,7 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
 #Loading previous file if it exists
         
     else:
-        with open(folder+slash+title+".csv","r",encoding="UTF-8") as f:
+        with open(folder+slash+title+".csv","r",encoding="UTF-8",newline="") as f:
             csv_file_read = reader(f)
             for read_row in csv_file_read:
                 rows.append(read_row)
@@ -202,10 +204,11 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
             row.insert(0,end_date)
             rows.append(row)
         rows.append(["","Current Version:",current_hash])
+        #print(rows[4:])
 
 #Writing current table to file
 
-        with open(folder+slash+title+".csv","w",encoding="utf-8") as g:
+        with open(folder+slash+title+".csv","w",encoding="utf-8",newline="") as g:
             csv_file = writer(g)
             csv_file.writerows(rows)
 
