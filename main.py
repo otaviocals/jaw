@@ -32,6 +32,8 @@ import time
 import datetime
 import gc
 import sys
+import os
+
 
 
 Config.set("graphics","width","450")
@@ -42,6 +44,9 @@ Config.set("graphics","borderless","0")
 current_os = platform
 
 
+
+
+
 if current_os.startswith("linux"):
     slash = "/"
 elif current_os.startswith("win32") or current_os.startswith("cygwin"):
@@ -50,6 +55,8 @@ elif current_os.startswith("darwin"):
     slash = "/"
 else:
     slash = "/"
+
+#logo_path = str(os.path.join(sys._MEIPASS, "logo.png"))
 
 links = [
     "http://www.bcb.gov.br/pt-br/#!/r/txjuros/?path=conteudo%2Ftxcred%2FReports%2FTaxasCredito-Consolidadas-porTaxasAnuais.rdl&nome=Pessoa%20F%C3%ADsica%20-%20Aquisi%C3%A7%C3%A3o%20de%20outros%20bens&parametros='tipopessoa:1;modalidade:402;encargo:101'",
@@ -86,7 +93,7 @@ Builder.load_string('''
     BoxLayout:
         orientation: "horizontal"
         Image:
-            source: "logo.jpg"
+            source: "logo.png"
             size_hint: None, None
             size: 150,200
             pos_hint: {"center_y": 0.5, "center_x": 0.5}
@@ -234,7 +241,8 @@ class AppScreen(GridLayout):
     def __init__(self,**kwargs):
         super(AppScreen, self).__init__(**kwargs)
 
-        Window.size = (450,200)
+        Window.size = (450,750)
+        Window.set_title("Webscraper de Taxa de Juros")
         
         self.cols = 1
         self.size_hint = (None,None)
@@ -245,11 +253,11 @@ class AppScreen(GridLayout):
         
 
 
-class MyApp(App):
+class Taxa_de_JurosApp(App):
 
     def build(self):
         return AppScreen()
 
 
 if __name__ == "__main__" :
-    MyApp().run()
+    Taxa_de_JurosApp().run()

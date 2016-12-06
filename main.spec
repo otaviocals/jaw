@@ -4,18 +4,15 @@ block_cipher = None
 
 
 a = Analysis(['main.py'],
-             pathex=['/home/cals/Projects/python_webcrawler'],
+             pathex=['C:\\Users\\Otavio Cals\\Desktop\\jaw-master'],
              binaries=None,
-             datas=[
-("logo.jpg","."),
-("xpopup.py","."),
+             datas=[("xpopup.py","."),
 ("notification.py","."),
 ("file.py","."),
 ("tools.py","."),
 ("xbase.py","."),
 ("form.py","."),
 ("win32timezone.py","."),
-("phantomjs.exe","."),
 ("logo.ico",".")],
              hiddenimports=["six","packaging","packaging.version","packaging.specifiers","packaging.requirements","appdirs"],
              hookspath=["."],
@@ -35,6 +32,5 @@ exe = EXE(pyz,
           debug=False,
           strip=False,
           upx=True,
-	  icon='logo.ico',
-          console=False )
-
+		  icon='logo.ico',
+          console=True )

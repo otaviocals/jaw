@@ -27,7 +27,6 @@ import sys
 import gc
 
 
-
 ######################
 # Webscrapping Stage #
 ######################
@@ -204,7 +203,7 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
             row.insert(0,end_date)
             rows.append(row)
         rows.append(["","Current Version:",current_hash])
-        #print(rows[4:])
+        
 
 #Writing current table to file
 
