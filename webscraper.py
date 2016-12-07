@@ -170,7 +170,7 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
         
     else:
         with open(folder+slash+title+".csv","r",encoding="UTF-8",newline="") as f:
-            csv_file_read = reader(f)
+            csv_file_read = reader(f,delimiter=";")
             for read_row in csv_file_read:
                 rows.append(read_row)
             
@@ -201,6 +201,7 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
             tds = tr.find_all("td")
             row = [elem.text for elem in tds]
             row.insert(0,end_date)
+            row[2] = normalize("NFKD",row[2]).encode("ASCII","ignore").decode("ASCII")
             rows.append(row)
         rows.append(["","Current Version:",current_hash])
         
@@ -208,7 +209,7 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
 #Writing current table to file
 
         with open(folder+slash+title+".csv","w",encoding="utf-8",newline="") as g:
-            csv_file = writer(g)
+            csv_file = writer(g,delimiter=";")
             csv_file.writerows(rows)
 
     gc.collect()
