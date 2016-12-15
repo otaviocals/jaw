@@ -31,7 +31,7 @@ import gc
 # Webscrapping Stage #
 ######################
 
-def Webscraper(url, folder, print_output = None, visual_output = None):
+def Webscraper(url, folder, print_output = None, visual_output = None, phantom_path = ""):
 
     rows = []
     row = []
@@ -49,7 +49,7 @@ def Webscraper(url, folder, print_output = None, visual_output = None):
 
 #Getting Raw Data
 
-    with closing(PhantomJS()) as browser:
+    with closing(PhantomJS(phantom_path)) as browser:
 
         browser.implicitly_wait(10)
         table_class = ""
