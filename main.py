@@ -31,6 +31,7 @@ from sys import platform
 from kivy.lang import Builder
 from file import XFolder
 import tools
+from time import sleep
 from webscraper import Webscraper
 import time
 import datetime
@@ -180,6 +181,8 @@ Builder.load_string('''
             
 ''')
 
+
+
 ######################
 #    App Functions   #
 ######################
@@ -209,6 +212,12 @@ class AppScreen(GridLayout):
         self.ids.start_button.disabled = True
         for elemen in range(0, len(links)):
             str_output_logger = []
+
+            #print(links[elemen])
+            #print(sel_folder)
+            #print(log_file)
+            #print(str_output_logger)
+            #print(phantom_path)
             
             Webscraper(links[elemen],sel_folder,log_file,str_output_logger,phantom_path)
             
@@ -235,6 +244,7 @@ class AppScreen(GridLayout):
 #GUI functions
 
     def start(self,*args):
+        global event
         if args[1] == "down":
             self.ids.spinner.disabled = True
             self.ids.folder_button.disabled = True
@@ -249,7 +259,8 @@ class AppScreen(GridLayout):
             elif self.ids.spinner.text == "12 horas":
                 time_interval = 43200
             global event
-            Clock.schedule_once(self.scrap,0.5)
+            event = Clock.schedule_once(self.scrap,0.5)
+            global event
             event = Clock.schedule_interval(self.scrap, time_interval)
         if args[1] == "normal":
             self.ids.spinner.disabled = False

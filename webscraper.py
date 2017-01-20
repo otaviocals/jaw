@@ -16,12 +16,15 @@ from unicodedata import normalize
 from contextlib import closing
 from selenium.webdriver import PhantomJS
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 from pathlib import Path
 from hashlib import sha512
 from os.path import isdir
 from os import makedirs,getcwd
 from sys import platform
+from time import sleep
 import lxml
 import sys
 import gc
@@ -33,6 +36,8 @@ import gc
 
 def Webscraper(url, folder, print_output = None, visual_output = None, phantom_path = ""):
 
+   
+    
     rows = []
     row = []
     append_to_csv = False
@@ -51,65 +56,70 @@ def Webscraper(url, folder, print_output = None, visual_output = None, phantom_p
 
     with closing(PhantomJS(phantom_path)) as browser:
 
-        browser.implicitly_wait(10)
+        browser.implicitly_wait(20)
         table_class = ""
         tries = 0
 
 #Getting Table HTML
         
         got_table = False
+        browser.get(url)
         while tries <= 5:
-            browser.get(url)
-    
-            page_source = browser.find_elements_by_class_name("a85")
-            if len(page_source) > 0:
-                table_class = "a85"
+
+            page_source = browser.find_elements_by_xpath("//div/table/tbody/tr[13]/td[3]/table")          
+            
+            got_table = page_source[0].get_attribute("outerHTML").find("Taxas de juros")
+            
+            if got_table > 0:
+                html_table = page_source[0].get_attribute("outerHTML")
+                dates_query = "//div/table/tbody/tr[4]/td[4]/table/tbody/tr/td"
+                sub_query = "//div/table/tbody/tr[9]/td[3]/table/tbody/tr/td"
                 got_table = True
+                    
                 break
             else:
-                page_source = browser.find_elements_by_class_name("a84")
-                if len(page_source) > 0:
-                    table_class = "a84"
+                page_source = browser.find_elements_by_xpath("//div/table/tbody/tr[16]/td[3]/table")
+                got_table = page_source[0].get_attribute("outerHTML").find("Taxas de juros")
+                if got_table > 0:
+                    html_table = page_source[0].get_attribute("outerHTML")
+                    dates_query = "//div/table/tbody/tr[5]/td[3]/table/tbody/tr/td"
+                    sub_query = "//div/table/tbody/tr[12]/td[3]/table/tbody/tr/td"
                     got_table = True
+                    
                     break
             tries += 1
         
 #Getting Dates HTML
         
-        dates_list = browser.find_elements_by_class_name("a19")
-        if len(dates_list) > 0:
-            dates_class = "a19"
-            dates = browser.find_element_by_class_name("a19").text
+        dates_list = browser.find_elements_by_xpath(dates_query)
+        dates = dates_list[0].text
+        
+        if len(dates) > 16:
+            dates_class = "1"
+        
         else:
-            dates_list = browser.find_elements_by_class_name("a18")
-            if len(dates_list) > 0:
-                dates_class = "a18"
-                dates = browser.find_element_by_class_name("a18").text
+            dates_class = "2"
+        
 
 #Getting Title HTML
 
         title = browser.find_element_by_class_name("mnuTitulo").text.replace(" ", "_")
         title += "_"
-        sub_title_list = browser.find_elements_by_class_name("a25l")
-        if len(sub_title_list) > 0:
-            sub_title_class = "a25l"
-            sub_title = browser.find_element_by_class_name("a25l").text.replace(" ", "_").upper()
-        else:
-            sub_title_list = browser.find_elements_by_class_name("a24l")
-            if len(sub_title_list) > 0:
-                sub_title_class = "a24l"
-                sub_title = browser.find_element_by_class_name("a24l").text.replace(" ", "_").upper()
+        sub_title_list = browser.find_elements_by_xpath(sub_query)
+        sub_title = sub_title_list[0].text.replace(" ", "_").upper()
+
         title += sub_title
         title = normalize("NFKD",title).encode("ASCII","ignore").decode("ASCII")
-
         print(title)
+        
         if not print_output == None:
             print_output.write((title+"\n").encode("utf-8").decode("utf-8"))
         if not visual_output == None:
             visual_output.append(title+"\n")
 
         page_source = browser.page_source
-
+        
+    
 ######################
 #  Processing Stage  #
 ######################
@@ -117,21 +127,13 @@ def Webscraper(url, folder, print_output = None, visual_output = None, phantom_p
 
 #Getting Table Dates
 
-    if dates_class == "a19":
+    if dates_class == "1":
         date_string_cut = dates.find(" a ")
         start_date = dates[:date_string_cut]
         end_date = dates[date_string_cut+3:]
-    elif dates_class == "a18":
+    elif dates_class == "2":
         start_date = dates
         end_date = start_date
-
-#Getting Table Data
-    
-    table_start = page_source.find("class=\""+table_class+"\"")-93
-    start_cut_source = page_source[table_start:]
-
-    table_end = start_cut_source.find("</td></tr></tbody></table>")+26
-    html_table = start_cut_source[:table_end]
 
 #Getting Table Digest
 
@@ -220,6 +222,11 @@ def Webscraper(url, folder, print_output = None, visual_output = None, phantom_p
 
 if __name__ == "__main__":
     from sys import argv
+    
     url = input("Enter url to scrap from:\n")
     folder = input("Enter folder to download to:\n")
-    Webscraper(url,folder)
+    driver_path = input("Enter driver path:\n")
+
+    print("Starting...")
+    
+    Webscraper(url,folder,phantom_path = driver_path)
